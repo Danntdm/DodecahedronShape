@@ -1,8 +1,8 @@
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 5;
+camera.position.z = 5; // cam position
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('gray');
+scene.background = new THREE.Color('gray'); // background color
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -11,21 +11,32 @@ document.body.appendChild(renderer.domElement);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 
-const light = new THREE.AmbientLight(0xFFFFFF, 0.4);
+const light = new THREE.AmbientLight(0xFFFFFF, 0.4); // soft white light
 light.position.set(5, 5, 5);
 scene.add(light);
+
+const wireframeMaterial = new THREE.MeshBasicMaterial({ 
+  color: 0xffffff,  // white
+  wireframe: true 
+});
 
 // Directional light for clearer, matte face shading
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
 dirLight.position.set(3, 5, 2);
 scene.add(dirLight);
 
-// Create geometry
-const geometry = new THREE.DodecahedronGeometry();
+// Parameters for the dodecahedron
+const params = {
+  radius: 1,
+  detail: 0
+};
+
+let geometry = new THREE.DodecahedronGeometry(params.radius, params.detail);
 
 
-// Create material with matte blue panels
-const material = new THREE.MeshLambertMaterial({ color: 0x1f6aa5, flatShading: true });
+// Material with matte panels
+const material = new THREE.MeshLambertMaterial({ color: 0x1f6aa5, flatShading: true,
+  transparent: true, opacity: 0.9});
 const dodecahedron = new THREE.Mesh(geometry, material);
 scene.add(dodecahedron);
 
@@ -36,6 +47,36 @@ const edgeLines = new THREE.LineSegments(
   new THREE.LineBasicMaterial({ color: 0xffffff })
 );
 dodecahedron.add(edgeLines);
+
+const wireframeModel = new THREE.Mesh(geometry, wireframeMaterial);
+dodecahedron.add(wireframeModel);
+
+// Create the GUI with sliders
+// shape changes added into the .add
+const gui = new lil.GUI();
+gui.add(params, 'radius', 1, 3).onChange(() => {
+  geometry.dispose();
+  geometry = new THREE.DodecahedronGeometry(params.radius, params.detail);
+  dodecahedron.geometry = geometry;
+  
+  edgeLines.geometry.dispose();
+  edgeLines.geometry = new THREE.EdgesGeometry(geometry);
+  
+  wireframeModel.geometry.dispose();
+  wireframeModel.geometry = geometry;
+});
+
+gui.add(params, 'detail', 0, 5, 1).onChange(() => {
+  geometry.dispose();
+  geometry = new THREE.DodecahedronGeometry(params.radius, params.detail);
+  dodecahedron.geometry = geometry;
+  
+  edgeLines.geometry.dispose();
+  edgeLines.geometry = new THREE.EdgesGeometry(geometry);
+  
+  wireframeModel.geometry.dispose();
+  wireframeModel.geometry = geometry;
+});
 
 function animate() {
   requestAnimationFrame(animate);
